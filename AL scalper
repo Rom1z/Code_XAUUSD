@@ -1,0 +1,53 @@
+```
+pinescript
+//@version=6
+indicator("AI Scalper with SuperTrend + RSI 2.0", overlay=false)
+
+// === SuperTrend параметры (из цены)
+atrPeriod = input.int(10, title="SuperTrend ATR Period")
+factor = input.float(3.0, title="SuperTrend Multiplier")
+[supertrend, direction] = ta.supertrend(factor, atrPeriod)
+isUpTrend = direction == 1
+isDownTrend = direction == -1
+
+// === RSI 2.0 параметры (быстрая реакция)
+rsiPeriod = input.int(2, title="RSI Period (2.0)")
+rsiOverbought = input.int(90, title="RSI Overbought")
+rsiOversold = input.int(10, title="RSI Oversold")
+rsi = ta.rsi(close, rsiPeriod)
+
+// === Buy/Sell сигналы (быстрая логика)
+buySignal = isUpTrend and rsi < rsiOversold
+sellSignal = isDownTrend and rsi > rsiOverbought
+
+// === Подсказка текста BUY / SELL
+signalText = buySignal ? "BUY" : sellSignal ? "SELL" : ""
+
+// === Визуализация RSI-графика
+plot(rsi, title="RSI 2.0", color=color.new(color.blue, 0), linewidth=2)
+hline(rsiOverbought, "Overbought (90)", color=color.red, linestyle=hline.style_dashed)
+hline(rsiOversold, "Oversold (10)", color=color.green, linestyle=hline.style_dashed)
+hline(50, "Middle", color=color.gray, linestyle=hline.style_dotted)
+
+// === Цвет фона для сигнала
+bgcolor(buySignal ? color.new(color.green, 85) : sellSignal ? color.new(color.red, 85) : na)
+
+// === Метка сигнала (в RSI панели)
+var label lastSignal = na
+if (buySignal or sellSignal)
+    label.delete(lastSignal)
+    lastSignal := label.new(
+        bar_index,
+        rsi,
+        signalText,
+        style=label.style_label_up,
+        color=buySignal ? color.green : color.red,
+        textcolor=color.white,
+        size=size.normal
+    )
+
+// === Алёрты
+alertcondition(buySignal, title="BUY Alert", message="AI Scalper: BUY signal")
+alertcondition(sellSignal, title="SELL Alert", message="AI Scalper: SELL signal")
+
+```
